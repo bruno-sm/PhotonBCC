@@ -1,0 +1,9 @@
+Usage:
+	photonbcc [-h] [-o=<file>] [-d] <file>...
+
+
+Options:
+	-d, --debug                    Print debug information while compiling
+	-h, --help                     Show this help
+	-o=<file>, --output=<file>     Set output file
+	                               [default: ./photongui.h]
