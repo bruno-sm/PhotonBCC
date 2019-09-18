@@ -100,8 +100,8 @@ rule =
       white
       v <- variable
       white
-      n <- name
-      params <- many (white >> parameter)
+      n <- varparameter 
+      params <- many (white >> genparameter)
       epos <- getPosition
       return $ Scene (position_info spos epos) v n params
       <?> "scene rule"
@@ -109,7 +109,7 @@ rule =
       spos <- getPosition
       string "paint"
       white
-      v <- char '%' >> nat 
+      v <- varparameter 
       epos <- getPosition
       return $ Paint (position_info spos epos) v
       <?> "paint rule"
@@ -117,7 +117,7 @@ rule =
       spos <- getPosition
       string "clear"
       white
-      v <- char '%' >> nat 
+      v <- varparameter 
       epos <- getPosition
       return $ Clear (position_info spos epos) v
       <?> "clear rule"
@@ -127,9 +127,9 @@ rule =
       white
       v <- variable
       white
-      s <- char '%' >> nat 
+      s <- varparameter 
       white
-      i <- nat
+      i <- natparameter
       epos <- getPosition
       return $ Param (position_info spos epos) v s i
       <?> "arg rule"
@@ -137,67 +137,94 @@ rule =
       spos <- getPosition
       string "wait"
       white
-      x <- real
+      x <- numparameter 
       epos <- getPosition
       return $ Wait (position_info spos epos) x 
       <?> "wait rule"
 
-variable =
-  getPosition >>= \spos ->
-  char '%' >> 
-  ((nat >>= \i -> getPosition >>= \epos ->
-    return $ Variable (position_info spos epos) i)
-  <|> (char '_' >> getPosition >>= \epos ->
-    return $ EmptyVariable (position_info spos epos)))
+variable = do
+  spos <- getPosition
+  char '%' 
+  i <- nat
+  epos <- getPosition
+  return $ Variable (position_info spos epos) i
   <?> "variable"
 
-parameter = do
-  paramname
-  <|> paramvar
-  <|> try paramreal
-  <|> try paramint
-  <|> paramnat
-  <|> paramstring
-  <|> paramcolor
+genparameter = do
+  paramname (\i s -> GenParamName i s)
+  <|> paramvar (\i n -> GenParamVar i n)
+  <|> try (paramreal (\i x -> GenParamReal i x))
+  <|> try (paramint (\i n -> GenParamInt i n))
+  <|> paramnat (\i n -> GenParamNat i n)
+  <|> paramstring (\i s -> GenParamString i s)
+  <|> paramcolor (\i c -> GenParamColor i c)
   <?> "parameter (variable, number, string or color)"
-  where
-    paramname = do
-      spos <- getPosition
-      n <- name
-      epos <- getPosition
-      return $ ParamName (position_info spos epos) n
-    paramvar = do
-      spos <- getPosition
-      char '%'
-      i <- nat
-      epos <- getPosition
-      return $ ParamVar (position_info spos epos) i
-    paramnat = do
-      spos <- getPosition
-      i <- nat
-      epos <- getPosition
-      return $ ParamNat (position_info spos epos) i
-    paramint = do
-      spos <- getPosition
-      i <- int_lit 
-      epos <- getPosition
-      return $ ParamInt (position_info spos epos) i
-    paramreal = do
-      spos <- getPosition
-      x <- real 
-      epos <- getPosition
-      return $ ParamReal (position_info spos epos) x
-    paramstring = do
-      spos <- getPosition
-      s <- string_literal 
-      epos <- getPosition
-      return $ ParamString (position_info spos epos) s
-    paramcolor = do
-      spos <- getPosition
-      c <- color 
-      epos <- getPosition
-      return $ ParamColor (position_info spos epos) c 
 
+varparameter =
+  paramname (\i s -> VarParamName i s)
+  <|> paramvar (\i n -> VarParamVar i n)
+  <?> "name or variable"
+
+numparameter =
+  paramname (\i s -> NumParamName i s)
+  <|> paramvar (\i n -> NumParamVar i n)
+  <|> paramreal (\i x -> NumParamReal i x)
+  <?> "name, variable or number"
+
+intparameter =
+  paramname (\i s -> IntParamName i s)
+  <|> paramvar (\i n -> IntParamVar i n)
+  <|> paramint (\i x -> IntParamInt i x)
+  <?> "name, variable or integer number"
+
+natparameter =
+  paramname (\i s -> NatParamName i s)
+  <|> paramvar (\i n -> NatParamVar i n)
+  <|> paramnat (\i x -> NatParamNat i x)
+  <?> "name, variable or natural number"
+
+paramname f = do
+  spos <- getPosition
+  n <- name
+  epos <- getPosition
+  return $ f (position_info spos epos) n
+
+paramvar f = do
+  spos <- getPosition
+  char '%'
+  i <- nat
+  epos <- getPosition
+  return $ f (position_info spos epos) i
+
+paramnat f = do
+  spos <- getPosition
+  i <- nat
+  epos <- getPosition
+  return $ f (position_info spos epos) i
+
+paramint f = do
+  spos <- getPosition
+  i <- int_lit 
+  epos <- getPosition
+  return $ f (position_info spos epos) i
+
+paramreal f = do
+  spos <- getPosition
+  x <- real 
+  epos <- getPosition
+  return $ f (position_info spos epos) x
+
+paramstring f = do
+  spos <- getPosition
+  s <- string_literal 
+  epos <- getPosition
+  return $ f (position_info spos epos) s
+
+paramcolor f = do
+  spos <- getPosition
+  c <- color 
+  epos <- getPosition
+  return $ f (position_info spos epos) c 
 
 string_literal = stringLiteral $ makeTokenParser haskellDef
 
