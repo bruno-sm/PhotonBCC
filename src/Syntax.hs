@@ -13,7 +13,7 @@ import Ast
 
 position_info :: SourcePos -> SourcePos -> Info
 position_info spos epos =
-  Info { location = Location { start_pos = (sourceLine spos, sourceColumn epos)
+  Info { location = Location { start_pos = (sourceLine spos, sourceColumn spos)
                              , end_pos = (sourceLine epos, sourceColumn epos)
                              , file = sourceName spos} }
 
@@ -70,7 +70,11 @@ photonbc = do
   gen_spaces
   epos <- getPosition
   eof
-  return $ Ast (position_info spos epos) defs 
+  pure $ Ast (position_info spos epos) defs 
+
+getPos x = do
+  p <- getPosition
+  return $! p
 
 definition = do
   spos <- getPosition
@@ -83,7 +87,7 @@ definition = do
   endOfLine
   gen_spaces
   rules <- many (rule <* gen_spaces)
-  return $ Definition (position_info spos epos) n args rules 
+  pure $ Definition (position_info spos epos) n args rules 
   <?> "definition"
 
 rule =
