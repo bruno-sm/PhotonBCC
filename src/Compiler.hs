@@ -5,6 +5,7 @@ module Compiler
 import Debug.Trace (trace)
 import Syntax
 import System.IO
+import DefinitionSorting 
 
 
 compile :: [String] -> IO String
@@ -19,4 +20,8 @@ compile (hd:tl) =
 compile1 :: String -> IO (Maybe String)
 compile1 path = do
   res <- parse path
-  return $ either (\err -> Just err) (\ast -> trace (show ast) Nothing) res
+  case res of
+    Left err -> return $ Just err
+    Right ast -> case sortDefinitions ast of
+                   Left err -> return $ Just err
+                   Right ast -> trace (show ast) (return Nothing)

@@ -104,7 +104,7 @@ rule =
       white
       v <- variable
       white
-      n <- varparameter 
+      n <- name 
       params <- many (white >> genparameter)
       epos <- getPosition
       return $ Scene (position_info spos epos) v n params

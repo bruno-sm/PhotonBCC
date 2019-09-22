@@ -23,9 +23,13 @@ data Info = Info { location :: Location } deriving (Show)
 
 data Ast = Ast Info [Definition] deriving (Show)
 
-data Definition = Definition Info String [String] [Rule] deriving (Show)
+data Definition = Definition {defInfo :: Info,
+                              defName :: String,
+                              defArgs :: [String],
+                              defRules :: [Rule]}
+                deriving (Show)
 
-data Rule = Scene Info Variable VarParameter [GenParameter]
+data Rule = Scene Info Variable String [GenParameter]
           | Paint Info VarParameter 
           | Clear Info VarParameter 
           | Param Info Variable VarParameter NatParameter 
