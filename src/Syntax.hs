@@ -58,7 +58,7 @@ number =
   try real <|> (int_lit >>= \i -> return $ fromInteger i) <?> "number"
 
 name = do
-  first <- noneOf [' ', '\t', '\"', '%', '\n', '\t', '\r', '#', '-',
+  first <- noneOf [' ', '\t', '\"', '%', '\n', '\t', '\r', '#', '-', '@',
                    '0', '1', '2', '3', '4', '5', '6', '7', '8', '9'] 
   rest <- many (noneOf [' ', '\t', '\"', '\n', '\t', '\r']) 
   return (first:rest)
@@ -102,38 +102,38 @@ rule =
       spos <- getPosition
       string "scene"
       white
-      v <- variable
+      v <- localVariable (\i d -> LocalVariable i d)
       white
-      n <- name 
-      params <- many (white >> genparameter)
+      id <- sceneIdArgument 
+      params <- many (white >> genArgument)
       epos <- getPosition
-      return $ Scene (position_info spos epos) v n params
+      return $ Scene (position_info spos epos) v id params
       <?> "scene rule"
     paint = do
       spos <- getPosition
       string "paint"
       white
-      v <- varparameter 
+      s <- sceneArgument 
       epos <- getPosition
-      return $ Paint (position_info spos epos) v
+      return $ Paint (position_info spos epos) s
       <?> "paint rule"
     clear = do
       spos <- getPosition
       string "clear"
       white
-      v <- varparameter 
+      s <- sceneArgument 
       epos <- getPosition
-      return $ Clear (position_info spos epos) v
+      return $ Clear (position_info spos epos) s
       <?> "clear rule"
     param = do
       spos <- getPosition
       string "param"
       white
-      v <- variable
+      v <- localVariable (\i d -> LocalVariable i d)
       white
-      s <- varparameter 
+      s <- sceneArgument 
       white
-      i <- natparameter
+      i <- naturalArgument
       epos <- getPosition
       return $ Param (position_info spos epos) v s i
       <?> "arg rule"
@@ -141,99 +141,101 @@ rule =
       spos <- getPosition
       string "wait"
       white
-      x <- numparameter 
+      x <- numericArgument
       epos <- getPosition
       return $ Wait (position_info spos epos) x 
       <?> "wait rule"
 
-variable = do
-  spos <- getPosition
-  char '%' 
-  i <- nat
-  epos <- getPosition
-  return $ Variable (position_info spos epos) i
-  <?> "variable"
+genArgument =
+  parameter (\i s -> GenArgumentParameter i s)
+  <|> globalVariable (\i s -> GenArgumentGlobalVariable i s)
+  <|> localVariable (\i n -> GenArgumentLocalVariable i n)
+  <|> try (realNumber (\i x -> GenArgumentReal i x))
+  <|> try (integerNumber (\i n -> GenArgumentInteger i n))
+  <|> naturalNumber (\i n -> GenArgumentNatural i n)
+  <|> pstring (\i s -> GenArgumentString i s)
+  <|> color (\i c -> GenArgumentColor i c)
+  <?> "general argument (prameter, global variable, local variable, number, string or color)"
 
-genparameter = do
-  paramname (\i s -> GenParamName i s)
-  <|> paramvar (\i n -> GenParamVar i n)
-  <|> try (paramreal (\i x -> GenParamReal i x))
-  <|> try (paramint (\i n -> GenParamInt i n))
-  <|> paramnat (\i n -> GenParamNat i n)
-  <|> paramstring (\i s -> GenParamString i s)
-  <|> paramcolor (\i c -> GenParamColor i c)
-  <?> "parameter (variable, number, string or color)"
+sceneIdArgument =
+  globalVariable (\i s -> SceneIdGlobalVariable i s)
+  <|> parameter (\i s -> SceneIdParameter i s)
 
-varparameter =
-  paramname (\i s -> VarParamName i s)
-  <|> paramvar (\i n -> VarParamVar i n)
-  <?> "name or variable"
+sceneArgument =
+  parameter (\i s -> SceneArgumentParameter i s)
+  <|> localVariable (\i n -> SceneArgumentLocalVariable i n)
+  <?> "parameter or local variable"
 
-numparameter =
-  paramname (\i s -> NumParamName i s)
-  <|> paramvar (\i n -> NumParamVar i n)
-  <|> paramreal (\i x -> NumParamReal i x)
+numericArgument =
+  parameter (\i s -> NumericParameter i s)
+  <|> localVariable (\i n -> NumericLocalVariable i n)
+  <|> anyNumber (\i x -> NumericLiteral i x)
   <?> "name, variable or number"
 
-intparameter =
-  paramname (\i s -> IntParamName i s)
-  <|> paramvar (\i n -> IntParamVar i n)
-  <|> paramint (\i x -> IntParamInt i x)
-  <?> "name, variable or integer number"
-
-natparameter =
-  paramname (\i s -> NatParamName i s)
-  <|> paramvar (\i n -> NatParamVar i n)
-  <|> paramnat (\i x -> NatParamNat i x)
+naturalArgument =
+  parameter (\i s -> NaturalParameter i s)
+  <|> localVariable (\i n -> NaturalLocalVariable i n)
+  <|> naturalNumber (\i x -> NaturalLiteral i x)
   <?> "name, variable or natural number"
 
-paramname f = do
+globalVariable f = do
+  spos <- getPosition
+  char '@'
+  n <- name
+  epos <- getPosition
+  return $ f (position_info spos epos) n
+
+parameter f = do
   spos <- getPosition
   n <- name
   epos <- getPosition
   return $ f (position_info spos epos) n
 
-paramvar f = do
+localVariable f = do
   spos <- getPosition
   char '%'
   i <- nat
   epos <- getPosition
   return $ f (position_info spos epos) i
 
-paramnat f = do
+naturalNumber f = do
   spos <- getPosition
   i <- nat
   epos <- getPosition
   return $ f (position_info spos epos) i
 
-paramint f = do
+integerNumber f = do
   spos <- getPosition
   i <- int_lit 
   epos <- getPosition
   return $ f (position_info spos epos) i
 
-paramreal f = do
+realNumber f = do
   spos <- getPosition
   x <- real 
   epos <- getPosition
   return $ f (position_info spos epos) x
 
-paramstring f = do
+anyNumber f = do
   spos <- getPosition
-  s <- string_literal 
+  x <- number 
+  epos <- getPosition
+  return $ f (position_info spos epos) x
+
+pstring f = do
+  spos <- getPosition
+  s <- stringLiteral $ makeTokenParser haskellDef
   epos <- getPosition
   return $ f (position_info spos epos) s
 
-paramcolor f = do
+color f = do
   spos <- getPosition
-  c <- color 
+  c <- color_literal
   epos <- getPosition
   return $ f (position_info spos epos) c 
 
-string_literal = stringLiteral $ makeTokenParser haskellDef
-
-color :: Parser String
-color =
+color_literal :: Parser String
+color_literal =
   char '#' >> count 8 (oneOf ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9',
                               'a', 'A', 'b', 'B', 'c', 'C', 'd', 'D', 'f'])
   <?> "hexadecimal color"

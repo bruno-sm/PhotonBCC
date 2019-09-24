@@ -4,13 +4,12 @@ module Ast
     , Location(..)
     , Info(..)
     , Rule(..)
-    , Variable(..)
-    , GenParameter(..)
-    , VarParameter(..)
-    , NatParameter(..)
-    , IntParameter(..)
-    , NumParameter(..)
-    , Type(..)
+    , LocalVariable(..)
+    , GenArgument(..)
+    , SceneIdArgument(..)
+    , SceneArgument(..)
+    , NaturalArgument(..)
+    , NumericArgument(..)
     ) where
 
 
@@ -29,48 +28,39 @@ data Definition = Definition {defInfo :: Info,
                               defRules :: [Rule]}
                 deriving (Show)
 
-data Rule = Scene Info Variable String [GenParameter]
-          | Paint Info VarParameter 
-          | Clear Info VarParameter 
-          | Param Info Variable VarParameter NatParameter 
-          | Wait Info NumParameter 
+data Rule = Scene Info LocalVariable SceneIdArgument [GenArgument]
+          | Paint Info SceneArgument 
+          | Clear Info SceneArgument 
+          | Param Info LocalVariable SceneArgument NaturalArgument 
+          | Wait Info NumericArgument
           deriving (Show)
 
-data Variable = Variable Info Integer deriving (Show)
+data LocalVariable = LocalVariable Info Integer deriving (Show)
 
-data GenParameter = GenParamName Info String
-                  | GenParamVar Info Integer
-                  | GenParamNat Info Integer
-                  | GenParamInt Info Integer
-                  | GenParamReal Info Double 
-                  | GenParamString Info String
-                  | GenParamColor Info String
-                  deriving (Show)
+data GenArgument = GenArgumentParameter Info String
+                 | GenArgumentGlobalVariable Info String
+                 | GenArgumentLocalVariable Info Integer
+                 | GenArgumentNatural Info Integer
+                 | GenArgumentInteger Info Integer
+                 | GenArgumentReal Info Double 
+                 | GenArgumentString Info String
+                 | GenArgumentColor Info String
+                 deriving (Show)
 
-data VarParameter = VarParamName Info String
-                  | VarParamVar Info Integer
-                  deriving (Show)
+data SceneIdArgument = SceneIdParameter Info String
+                     | SceneIdGlobalVariable Info String
+                     deriving (Show)
 
-data NumParameter = NumParamName Info String
-                  | NumParamVar Info Integer
-                  | NumParamReal Info Double 
-                  deriving (Show)
+data SceneArgument = SceneArgumentParameter Info String
+                   | SceneArgumentLocalVariable Info Integer
+                   deriving (Show)
 
-data IntParameter = IntParamName Info String
-                  | IntParamVar Info Integer
-                  | IntParamInt Info Integer 
-                  deriving (Show)
+data NumericArgument = NumericParameter Info String
+                     | NumericLocalVariable Info Integer
+                     | NumericLiteral Info Double
+                     deriving (Show)
 
-data NatParameter = NatParamName Info String
-                  | NatParamVar Info Integer
-                  | NatParamNat Info Integer 
-                  deriving (Show)
-
-data Type = TypeNat
-          | TypeInt
-          | TypeReal
-          | TypeString
-          | TypeColor
-          | TypeAny
-          | TypeScene [Type]
-          deriving (Show)
+data NaturalArgument = NaturalParameter Info String
+                     | NaturalLocalVariable Info Integer
+                     | NaturalLiteral Info Integer 
+                     deriving (Show)

@@ -25,7 +25,7 @@ topologicalSort definitions =
   let edges = buildGraphEdges definitions in
   case detectCycles edges of
   [] -> let (graph, vertexToNode) = graphFromEdges' edges in
-        Right $ map ((\ (node, _, _) -> node) . vertexToNode) $ topSort graph
+        Right $ map ((\ (node, _, _) -> node) . vertexToNode) $ reverse (topSort graph)
   cycles -> Left cycles
 
 
@@ -36,7 +36,8 @@ buildGraphEdges definitions =
     definitionEdges (Definition i name params rules) =
       (Definition i name params rules, name, dependencies rules [])
     dependencies [] depList = depList
-    dependencies ((Scene _ _ name _):tl) depList = dependencies tl (name:depList)
+    dependencies ((Scene _ _ (SceneIdGlobalVariable _ name) _):tl) depList =
+      dependencies tl (name:depList)
     dependencies (_:tl) depList = dependencies tl depList
 
 
