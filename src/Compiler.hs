@@ -6,6 +6,7 @@ import Debug.Trace (trace)
 import Syntax
 import System.IO
 import DefinitionSorting 
+import TypeCheck
 
 
 compile :: [String] -> IO String
@@ -24,4 +25,4 @@ compile1 path = do
     Left err -> return $ Just err
     Right ast -> case sortDefinitions ast of
                    Left err -> return $ Just err
-                   Right ast -> trace (show ast) (return Nothing)
+                   Right ast -> return $ typeCheck ast 

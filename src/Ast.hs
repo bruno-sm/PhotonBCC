@@ -17,15 +17,14 @@ data Location = Location { start_pos :: (Int, Int)
                          , end_pos :: (Int, Int)
                          , file :: String } deriving (Show)
 
-
 data Info = Info { location :: Location } deriving (Show)
 
 data Ast = Ast Info [Definition] deriving (Show)
 
-data Definition = Definition {defInfo :: Info,
-                              defName :: String,
-                              defArgs :: [String],
-                              defRules :: [Rule]}
+data Definition = Definition { defInfo :: Info,
+                               defName :: String,
+                               defParameters :: [String],
+                               defRules :: [Rule] }
                 deriving (Show)
 
 data Rule = Scene Info LocalVariable SceneIdArgument [GenArgument]
