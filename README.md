@@ -1,3 +1,3 @@
-# photonBCC
+# PhotonBCC
 
 Photon bytecode compiler
