@@ -183,6 +183,8 @@ typeCheckRules ((Wait _ (NumericLocalVariable _ varId)):tl) = do
   varType <- checkLocalVariableType varId TReal
   typeCheckRules tl
 
+typeCheckRules ((Wait _ (NumericLiteral _ _)):tl) = typeCheckRules tl 
+
 
 getSceneIdType :: String -> Infer Type
 getSceneIdType sceneId = do

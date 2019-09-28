@@ -159,12 +159,9 @@ genArgument =
 
 sceneIdArgument =
   globalVariable (\i s -> SceneIdGlobalVariable i s)
-  <|> parameter (\i s -> SceneIdParameter i s)
 
 sceneArgument =
-  parameter (\i s -> SceneArgumentParameter i s)
-  <|> localVariable (\i n -> SceneArgumentLocalVariable i n)
-  <?> "parameter or local variable"
+  localVariable (\i n -> SceneArgumentLocalVariable i n)
 
 numericArgument =
   parameter (\i s -> NumericParameter i s)

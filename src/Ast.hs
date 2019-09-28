@@ -46,12 +46,10 @@ data GenArgument = GenArgumentParameter Info String
                  | GenArgumentColor Info String
                  deriving (Show)
 
-data SceneIdArgument = SceneIdParameter Info String
-                     | SceneIdGlobalVariable Info String
+data SceneIdArgument = SceneIdGlobalVariable Info String
                      deriving (Show)
 
-data SceneArgument = SceneArgumentParameter Info String
-                   | SceneArgumentLocalVariable Info Integer
+data SceneArgument = SceneArgumentLocalVariable Info Integer
                    deriving (Show)
 
 data NumericArgument = NumericParameter Info String
